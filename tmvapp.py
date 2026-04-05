@@ -47,19 +47,35 @@ df['Comp_FV'] = P * ((1 + r_comp) ** df['Year'])
 df['Simple_Interest'] = df['Simple_FV'] - P
 df['Comp_Interest'] = df['Comp_FV'] - P
 
-# Year-by-Year Breakdown (Marginal Interest - showing how interest changes)
-# For simple interest, it's a flat rate every year (except year 0)
+# ------------------------------------------
+# MARGINAL INTEREST & RATES (The "Per Term" Changes)
+# ------------------------------------------
+# Simple Interest Added This Year (Constant)
 df['Simple_New_Interest'] = np.where(df['Year'] == 0, 0, P * r_simple)
-# For compound interest, it's the difference between this year's total and last year's total
+
+# Compound Interest Added This Year (Growing)
 df['Comp_New_Interest'] = df['Comp_FV'].diff().fillna(0)
 df['Comp_Base_Before_This_Year'] = df['Comp_FV'].shift(1).fillna(P)
 
-# Present Value Data & Interest Gaps
+# The Benefit/Loss per term (Compound New Interest minus Simple New Interest)
+df['Compound_Benefit_This_Year'] = df['Comp_New_Interest'] - df['Simple_New_Interest']
+
+# Effective Interest Rate this year (based on original principal)
+df['Effective_Comp_Rate'] = np.where(df['Year'] == 0, 0, (df['Comp_New_Interest'] / P) * 100)
+
+# ------------------------------------------
+# PRESENT VALUE DATA
+# ------------------------------------------
 df['Simple_PV'] = fv_target / (1 + r_simple * df['Year'])
 df['Comp_PV'] = fv_target / ((1 + r_comp) ** df['Year'])
-# The "Interest Gap" is how much free money the market provides to reach the target
+
+# Interest Gap (Free money from the market)
 df['Simple_PV_Interest'] = fv_target - df['Simple_PV']
 df['Comp_PV_Interest'] = fv_target - df['Comp_PV']
+
+# Cash Saved Today by using Compound over Simple
+df['PV_Cash_Saved'] = df['Simple_PV'] - df['Comp_PV']
+
 
 # ==========================================
 # SAMPLE DATA FOR TABLES (5 evenly spaced years)
@@ -71,7 +87,7 @@ df_sample = df[df['Year'].isin(sample_indices)].copy()
 # GRAPH 1: CUMULATIVE INTEREST (PROFIT)
 # ==========================================
 st.header("1. The Profit (Cumulative Interest)")
-st.info("**Layman Translation:** This shows *only* the extra money you made. We have added the 'Total: Principal + Interest' column so you can see your full account balance alongside just the profit.")
+st.info("**Layman Translation:** This shows *only* the extra money you made. The table shows the total profit gap between the two methods over time.")
 
 col1, col2 = st.columns([1, 2])
 with col1:
@@ -82,14 +98,14 @@ with col1:
     st.latex(r"I_{comp}(t) = P \cdot [(1 + r)^t - 1]")
     
     st.markdown("### 5-Year Snapshot")
-    table1 = df_sample[['Year', 'Simple_Interest', 'Simple_FV', 'Comp_Interest', 'Comp_FV']].copy()
-    table1.columns = ['Year', 'Profit (Simple)', 'Total: P+I (Simple)', 'Profit (Compound)', 'Total: P+I (Compound)']
+    table1 = df_sample[['Year', 'Simple_Interest', 'Comp_Interest']].copy()
+    table1['Total Profit Difference'] = table1['Comp_Interest'] - table1['Simple_Interest']
+    table1.columns = ['Year', 'Total Profit (Simple)', 'Total Profit (Compound)', 'Compound Benefit (Total)']
     
     st.dataframe(table1.style.format({
-        'Profit (Simple)': '${:,.0f}',
-        'Total: P+I (Simple)': '${:,.0f}',
-        'Profit (Compound)': '${:,.0f}',
-        'Total: P+I (Compound)': '${:,.0f}'
+        'Total Profit (Simple)': '${:,.0f}',
+        'Total Profit (Compound)': '${:,.0f}',
+        'Compound Benefit (Total)': '${:,.0f}'
     }), hide_index=True, use_container_width=True)
 
 with col2:
@@ -102,28 +118,22 @@ with col2:
 st.markdown("---")
 
 # ==========================================
-# GRAPH 2: TOTAL AMOUNT (FUTURE VALUE)
+# GRAPH 2: TOTAL AMOUNT & PER-TERM CHANGES
 # ==========================================
-st.header("2. Total Amount (Future Value)")
-st.info("**Layman Translation:** Here we prove the magic of compounding. Look at the 'New Interest Added' columns. Simple interest gives you the exact same amount every year. Compound interest gives you a slightly larger chunk of money every single year because you are earning interest on last year's interest.")
+st.header("2. How Interest Changes Per Term")
+st.info(f"**Layman Translation:** Instead of looking at the total value, let's look at the **New Interest Added** each specific year. Notice how the 'Effective Rate' on your original ${P:,.0f} grows every year with compound interest, creating a larger financial benefit as time goes on.")
 
 col3, col4 = st.columns([1, 2])
 with col3:
-    st.markdown("### The Formulas")
-    st.markdown("**Simple Future Value:**")
-    st.latex(r"FV_{simple} = P(1 + r \cdot t)")
-    st.markdown("**Compound Future Value:**")
-    st.latex(r"FV_{comp} = P(1 + r)^t")
-    
-    st.markdown("### 5-Year Snapshot")
-    table2 = df_sample[['Year', 'Simple_FV', 'Simple_New_Interest', 'Comp_FV', 'Comp_New_Interest']].copy()
-    table2.columns = ['Year', 'Total Value (Simple)', 'New Interest Added (Simple)', 'Total Value (Compound)', 'New Interest Added (Compound)']
+    st.markdown("### Per-Term Snapshot")
+    table2 = df_sample[['Year', 'Simple_New_Interest', 'Comp_New_Interest', 'Compound_Benefit_This_Year', 'Effective_Comp_Rate']].copy()
+    table2.columns = ['Year', 'New Interest Added (Simple)', 'New Interest Added (Compound)', 'Compound Benefit vs Simple (This Year)', 'Effective Rate (Compound)']
     
     st.dataframe(table2.style.format({
-        'Total Value (Simple)': '${:,.0f}',
         'New Interest Added (Simple)': '${:,.0f}',
-        'Total Value (Compound)': '${:,.0f}',
-        'New Interest Added (Compound)': '${:,.0f}'
+        'New Interest Added (Compound)': '${:,.0f}',
+        'Compound Benefit vs Simple (This Year)': '${:,.0f}',
+        'Effective Rate (Compound)': '{:.2f}%'
     }), hide_index=True, use_container_width=True)
 
 with col4:
@@ -140,28 +150,22 @@ with col4:
 st.markdown("---")
 
 # ==========================================
-# GRAPH 3 & 4: PRESENT VALUE
+# GRAPH 3 & 4: PRESENT VALUE & INTEREST AFFECTED
 # ==========================================
-st.header("3. Present Value (Time-Traveling Your Money)")
-st.info(f"**Layman Translation:** To reach **${fv_target:,.0f}**, your money is split into two parts: the cash you put in today (Present Value), and the free money the market gives you (Interest Gap). Notice how as the Present Value shrinks over time, the Interest Gap grows to make up the difference!")
+st.header("3. Present Value (Interest Affected & Cash Saved)")
+st.info(f"**Layman Translation:** To reach **${fv_target:,.0f}**, compounding does the heavy lifting for you. Look at the 'Upfront Cash Saved' column. Because compounding generates a larger 'Interest Gap' (free money from the market), you don't have to put as much of your own money in today compared to simple interest.")
 
 col5, col6 = st.columns([1, 2])
 with col5:
-    st.markdown("### The Formulas")
-    st.markdown("**Simple Present Value:**")
-    st.latex(r"PV_{simple} = \frac{FV}{1 + r \cdot t}")
-    st.markdown("**Compound Present Value:**")
-    st.latex(r"PV_{comp} = \frac{FV}{(1 + r)^t}")
-    
-    st.markdown("### 5-Year Snapshot")
-    table3 = df_sample[['Year', 'Simple_PV', 'Simple_PV_Interest', 'Comp_PV', 'Comp_PV_Interest']].copy()
-    table3.columns = ['Year', 'Present Value (Simple)', 'Interest Gap (Simple)', 'Present Value (Compound)', 'Interest Gap (Compound)']
+    st.markdown("### Present Value Snapshot")
+    table3 = df_sample[['Year', 'Simple_PV', 'Comp_PV', 'Comp_PV_Interest', 'PV_Cash_Saved']].copy()
+    table3.columns = ['Year', 'Required Cash (Simple)', 'Required Cash (Compound)', 'Interest Gap (Compound)', 'Upfront Cash Saved (Benefit)']
     
     st.dataframe(table3.style.format({
-        'Present Value (Simple)': '${:,.0f}',
-        'Interest Gap (Simple)': '${:,.0f}',
-        'Present Value (Compound)': '${:,.0f}',
-        'Interest Gap (Compound)': '${:,.0f}'
+        'Required Cash (Simple)': '${:,.0f}',
+        'Required Cash (Compound)': '${:,.0f}',
+        'Interest Gap (Compound)': '${:,.0f}',
+        'Upfront Cash Saved (Benefit)': '${:,.0f}'
     }), hide_index=True, use_container_width=True)
 
 with col6:
