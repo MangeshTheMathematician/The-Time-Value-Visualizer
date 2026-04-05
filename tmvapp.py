@@ -48,33 +48,28 @@ df['Simple_Interest'] = df['Simple_FV'] - P
 df['Comp_Interest'] = df['Comp_FV'] - P
 
 # ------------------------------------------
-# MARGINAL INTEREST & RATES (The "Per Term" Changes)
+# MARGINAL INTEREST & MICRO-MEASUREMENT RATES
 # ------------------------------------------
-# Simple Interest Added This Year (Constant)
-df['Simple_New_Interest'] = np.where(df['Year'] == 0, 0, P * r_simple)
+# 1. Total Profit Micro-measurement (For Table 1)
+df['Compound_Benefit_Total'] = df['Comp_Interest'] - df['Simple_Interest']
+# How much extra yield (%) did compounding generate on the original principal?
+df['Total_Compound_Advantage_Rate'] = (df['Compound_Benefit_Total'] / P) * 100
 
-# Compound Interest Added This Year (Growing)
+# 2. Per-Term Micro-measurement (For Table 2)
+df['Simple_New_Interest'] = np.where(df['Year'] == 0, 0, P * r_simple)
 df['Comp_New_Interest'] = df['Comp_FV'].diff().fillna(0)
 df['Comp_Base_Before_This_Year'] = df['Comp_FV'].shift(1).fillna(P)
-
-# The Benefit/Loss per term (Compound New Interest minus Simple New Interest)
 df['Compound_Benefit_This_Year'] = df['Comp_New_Interest'] - df['Simple_New_Interest']
-
-# Effective Interest Rate this year (based on original principal)
 df['Effective_Comp_Rate'] = np.where(df['Year'] == 0, 0, (df['Comp_New_Interest'] / P) * 100)
 
-# ------------------------------------------
-# PRESENT VALUE DATA
-# ------------------------------------------
+# 3. Present Value Micro-measurement (For Table 3)
 df['Simple_PV'] = fv_target / (1 + r_simple * df['Year'])
 df['Comp_PV'] = fv_target / ((1 + r_comp) ** df['Year'])
-
-# Interest Gap (Free money from the market)
 df['Simple_PV_Interest'] = fv_target - df['Simple_PV']
 df['Comp_PV_Interest'] = fv_target - df['Comp_PV']
-
-# Cash Saved Today by using Compound over Simple
 df['PV_Cash_Saved'] = df['Simple_PV'] - df['Comp_PV']
+# What percentage of the final target amount was paid for strictly by the compounding advantage?
+df['PV_Compound_Advantage_Rate'] = (df['PV_Cash_Saved'] / fv_target) * 100
 
 
 # ==========================================
@@ -87,7 +82,7 @@ df_sample = df[df['Year'].isin(sample_indices)].copy()
 # GRAPH 1: CUMULATIVE INTEREST (PROFIT)
 # ==========================================
 st.header("1. The Profit (Cumulative Interest)")
-st.info("**Layman Translation:** This shows *only* the extra money you made. The table shows the total profit gap between the two methods over time.")
+st.info("**The Micro-Measurement:** Look at the 'Compound Advantage Rate'. This isn't just dollars—it shows exactly how much *extra* return on your initial investment you gained strictly because you chose compounding over simple interest.")
 
 col1, col2 = st.columns([1, 2])
 with col1:
@@ -98,14 +93,14 @@ with col1:
     st.latex(r"I_{comp}(t) = P \cdot [(1 + r)^t - 1]")
     
     st.markdown("### 5-Year Snapshot")
-    table1 = df_sample[['Year', 'Simple_Interest', 'Comp_Interest']].copy()
-    table1['Total Profit Difference'] = table1['Comp_Interest'] - table1['Simple_Interest']
-    table1.columns = ['Year', 'Total Profit (Simple)', 'Total Profit (Compound)', 'Compound Benefit (Total)']
+    table1 = df_sample[['Year', 'Simple_Interest', 'Comp_Interest', 'Compound_Benefit_Total', 'Total_Compound_Advantage_Rate']].copy()
+    table1.columns = ['Year', 'Profit (Simple)', 'Profit (Compound)', 'Compound Benefit ($)', 'Compound Advantage Rate']
     
     st.dataframe(table1.style.format({
-        'Total Profit (Simple)': '${:,.0f}',
-        'Total Profit (Compound)': '${:,.0f}',
-        'Compound Benefit (Total)': '${:,.0f}'
+        'Profit (Simple)': '${:,.0f}',
+        'Profit (Compound)': '${:,.0f}',
+        'Compound Benefit ($)': '${:,.0f}',
+        'Compound Advantage Rate': '{:.2f}%'
     }), hide_index=True, use_container_width=True)
 
 with col2:
@@ -121,19 +116,19 @@ st.markdown("---")
 # GRAPH 2: TOTAL AMOUNT & PER-TERM CHANGES
 # ==========================================
 st.header("2. How Interest Changes Per Term")
-st.info(f"**Layman Translation:** Instead of looking at the total value, let's look at the **New Interest Added** each specific year. Notice how the 'Effective Rate' on your original ${P:,.0f} grows every year with compound interest, creating a larger financial benefit as time goes on.")
+st.info(f"**The Micro-Measurement:** Here we isolate each specific year. Notice how the 'Effective Rate' on your original ${P:,.0f} grows every year with compound interest, creating a larger financial benefit as time goes on.")
 
 col3, col4 = st.columns([1, 2])
 with col3:
     st.markdown("### Per-Term Snapshot")
     table2 = df_sample[['Year', 'Simple_New_Interest', 'Comp_New_Interest', 'Compound_Benefit_This_Year', 'Effective_Comp_Rate']].copy()
-    table2.columns = ['Year', 'New Interest Added (Simple)', 'New Interest Added (Compound)', 'Compound Benefit vs Simple (This Year)', 'Effective Rate (Compound)']
+    table2.columns = ['Year', 'New Interest (Simple)', 'New Interest (Compound)', 'Compound Benefit (This Year)', 'Effective Rate (This Year)']
     
     st.dataframe(table2.style.format({
-        'New Interest Added (Simple)': '${:,.0f}',
-        'New Interest Added (Compound)': '${:,.0f}',
-        'Compound Benefit vs Simple (This Year)': '${:,.0f}',
-        'Effective Rate (Compound)': '{:.2f}%'
+        'New Interest (Simple)': '${:,.0f}',
+        'New Interest (Compound)': '${:,.0f}',
+        'Compound Benefit (This Year)': '${:,.0f}',
+        'Effective Rate (This Year)': '{:.2f}%'
     }), hide_index=True, use_container_width=True)
 
 with col4:
@@ -153,19 +148,19 @@ st.markdown("---")
 # GRAPH 3 & 4: PRESENT VALUE & INTEREST AFFECTED
 # ==========================================
 st.header("3. Present Value (Interest Affected & Cash Saved)")
-st.info(f"**Layman Translation:** To reach **${fv_target:,.0f}**, compounding does the heavy lifting for you. Look at the 'Upfront Cash Saved' column. Because compounding generates a larger 'Interest Gap' (free money from the market), you don't have to put as much of your own money in today compared to simple interest.")
+st.info(f"**The Micro-Measurement:** To reach **${fv_target:,.0f}**, look at the 'Compound Advantage Rate'. This percentage reveals exactly how much of your future goal you *didn't have to pay for out of pocket* strictly because you chose a compounding vehicle over a simple one.")
 
 col5, col6 = st.columns([1, 2])
 with col5:
     st.markdown("### Present Value Snapshot")
-    table3 = df_sample[['Year', 'Simple_PV', 'Comp_PV', 'Comp_PV_Interest', 'PV_Cash_Saved']].copy()
-    table3.columns = ['Year', 'Required Cash (Simple)', 'Required Cash (Compound)', 'Interest Gap (Compound)', 'Upfront Cash Saved (Benefit)']
+    table3 = df_sample[['Year', 'Simple_PV', 'Comp_PV', 'PV_Cash_Saved', 'PV_Compound_Advantage_Rate']].copy()
+    table3.columns = ['Year', 'Required Cash (Simple)', 'Required Cash (Compound)', 'Upfront Cash Saved ($)', 'Compound Advantage Rate']
     
     st.dataframe(table3.style.format({
         'Required Cash (Simple)': '${:,.0f}',
         'Required Cash (Compound)': '${:,.0f}',
-        'Interest Gap (Compound)': '${:,.0f}',
-        'Upfront Cash Saved (Benefit)': '${:,.0f}'
+        'Upfront Cash Saved ($)': '${:,.0f}',
+        'Compound Advantage Rate': '{:.2f}%'
     }), hide_index=True, use_container_width=True)
 
 with col6:
