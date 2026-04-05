@@ -7,12 +7,12 @@ from plotly.subplots import make_subplots
 # ==========================================
 # PAGE CONFIGURATION
 # ==========================================
-st.set_page_config(page_title="Interest Visualizer", layout="wide")
+st.set_page_config(page_title="TVM Visualizer", layout="wide")
 
-st.title("Simple vs. Compound Interest: The Magic of Time")
+st.title("Simple vs. Compound Interest: The Time Value of Money")
 st.markdown("""
 Welcome! This app explains the math behind how money grows (or shrinks when looking backwards in time). 
-We will break down all the complex formulas into plain English so you can see exactly how your money behaves over time.
+We break down complex formulas into plain English so you can see exactly how your money behaves over time.
 """)
 
 # ==========================================
@@ -38,15 +38,14 @@ r_comp = r_comp_input / 100
 # ==========================================
 years = np.arange(0, t_max + 1)
 
-# Future Value & Cumulative Interest Data
+# Full DataFrame for plotting
 df = pd.DataFrame({'Year': years})
 df['Simple_FV'] = P * (1 + r_simple * df['Year'])
 df['Comp_FV'] = P * ((1 + r_comp) ** df['Year'])
 df['Simple_Interest'] = df['Simple_FV'] - P
 df['Comp_Interest'] = df['Comp_FV'] - P
 
-# Year-by-Year Compound Breakdown (For Graph 2)
-# To prove how interest applies on new value:
+# Year-by-Year Compound Breakdown
 df['Comp_New_Interest_This_Year'] = df['Comp_FV'].diff().fillna(0)
 df['Comp_Base_Before_This_Year'] = df['Comp_FV'].shift(1).fillna(P)
 
@@ -56,6 +55,12 @@ df['Comp_PV'] = fv_target / ((1 + r_comp) ** df['Year'])
 df['Simple_PV_Interest'] = fv_target - df['Simple_PV']
 df['Comp_PV_Interest'] = fv_target - df['Comp_PV']
 
+# ==========================================
+# SAMPLE DATA FOR TABLES (5 evenly spaced years)
+# ==========================================
+# This selects 5 index points (e.g., Year 0, 7, 15, 22, 30)
+sample_indices = np.linspace(0, t_max, 5, dtype=int)
+df_sample = df[df['Year'].isin(sample_indices)].copy()
 
 # ==========================================
 # GRAPH 1: CUMULATIVE INTEREST (PROFIT)
@@ -70,6 +75,15 @@ with col1:
     st.latex(r"I_{simple}(t) = P \cdot r \cdot t")
     st.markdown("**Compound Interest:**")
     st.latex(r"I_{comp}(t) = P \cdot [(1 + r)^t - 1]")
+    
+    st.markdown("### 5-Year Snapshot")
+    st.markdown("See how the numbers diverge over time:")
+    # Format table for display
+    table1 = df_sample[['Year', 'Simple_Interest', 'Comp_Interest']].copy()
+    st.dataframe(table1.style.format({
+        'Simple_Interest': '${:,.2f}',
+        'Comp_Interest': '${:,.2f}'
+    }), hide_index=True, use_container_width=True)
 
 with col2:
     fig1 = go.Figure()
@@ -81,9 +95,9 @@ with col2:
 st.markdown("---")
 
 # ==========================================
-# GRAPH 2: TOTAL AMOUNT & PROOF OF COMPOUNDING
+# GRAPH 2: TOTAL AMOUNT (FUTURE VALUE)
 # ==========================================
-st.header("2. Total Amount (Future Value) & The 'Interest on Interest' Proof")
+st.header("2. Total Amount (Future Value)")
 st.info("**Layman Translation:** This shows your starting money PLUS the profit. Look at the bar chart below: see how the new orange chunk (this year's interest) gets bigger every single year? That's because it's calculated on a larger base amount, not just your initial seed. That is the magic of compounding.")
 
 col3, col4 = st.columns([1, 2])
@@ -93,22 +107,20 @@ with col3:
     st.latex(r"FV_{simple} = P(1 + r \cdot t)")
     st.markdown("**Compound Future Value:**")
     st.latex(r"FV_{comp} = P(1 + r)^t")
+    
+    st.markdown("### 5-Year Snapshot")
+    table2 = df_sample[['Year', 'Simple_FV', 'Comp_FV']].copy()
+    st.dataframe(table2.style.format({
+        'Simple_FV': '${:,.2f}',
+        'Comp_FV': '${:,.2f}'
+    }), hide_index=True, use_container_width=True)
 
 with col4:
-    # We use a stacked bar/line combo to PROVE the compounding effect year by year
     fig2 = go.Figure()
-    
-    # Adding line for Simple FV
     fig2.add_trace(go.Scatter(x=df['Year'], y=df['Simple_FV'], mode='lines', name='Simple Total (Line)', line=dict(color='#1f77b4', dash='dash')))
-    
-    # Adding stacked bars to prove compound growth mechanics
     fig2.add_trace(go.Bar(x=df['Year'], y=[P]*len(df), name='Initial Principal', marker_color='#2ca02c'))
-    
-    # The interest accumulated in past years
     past_interest = df['Comp_Base_Before_This_Year'] - P
     fig2.add_trace(go.Bar(x=df['Year'], y=past_interest, name='Past Compounded Interest', marker_color='#ffbb78'))
-    
-    # The new interest earned THIS year
     fig2.add_trace(go.Bar(x=df['Year'], y=df['Comp_New_Interest_This_Year'], name='New Interest Added This Year', marker_color='#d62728'))
 
     fig2.update_layout(barmode='stack', title="Proving Compound Growth Year-by-Year", xaxis_title="Years", yaxis_title="Total Account Value ($)", hovermode="x unified")
@@ -119,8 +131,8 @@ st.markdown("---")
 # ==========================================
 # GRAPH 3 & 4: PRESENT VALUE
 # ==========================================
-st.header("3 & 4. Present Value (Time-Traveling Your Money)")
-st.info(f"**Layman Translation:** Imagine you need exactly **${fv_target:,.0f}** in the future to buy a house. *Present Value* asks: 'How much cash do I need to lock away TODAY to reach that goal?' The longer you have to wait, the less money you need to put in today because time does the heavy lifting for you.")
+st.header("3. Present Value (Time-Traveling Your Money)")
+st.info(f"**Layman Translation:** Imagine you need exactly **${fv_target:,.0f}** in the future. *Present Value* asks: 'How much cash do I need to lock away TODAY to reach that goal?' The longer you have to wait, the less money you need to put in today because time does the heavy lifting for you.")
 
 col5, col6 = st.columns([1, 2])
 with col5:
@@ -129,9 +141,16 @@ with col5:
     st.latex(r"PV_{simple} = \frac{FV}{1 + r \cdot t}")
     st.markdown("**Compound Present Value:**")
     st.latex(r"PV_{comp} = \frac{FV}{(1 + r)^t}")
+    
+    st.markdown("### 5-Year Snapshot")
+    st.markdown(f"*Cash needed today to reach ${fv_target:,.0f}*")
+    table3 = df_sample[['Year', 'Simple_PV', 'Comp_PV']].copy()
+    st.dataframe(table3.style.format({
+        'Simple_PV': '${:,.2f}',
+        'Comp_PV': '${:,.2f}'
+    }), hide_index=True, use_container_width=True)
 
 with col6:
-    # Subplots to show the two PV graphs requested
     fig3 = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1, 
                          subplot_titles=("How much you need TODAY (Present Value)", "How much the market pays for you (Interest)"))
     
