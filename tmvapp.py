@@ -40,25 +40,30 @@ years = np.arange(0, t_max + 1)
 
 # Full DataFrame for plotting
 df = pd.DataFrame({'Year': years})
+
+# Future Value & Cumulative Interest
 df['Simple_FV'] = P * (1 + r_simple * df['Year'])
 df['Comp_FV'] = P * ((1 + r_comp) ** df['Year'])
 df['Simple_Interest'] = df['Simple_FV'] - P
 df['Comp_Interest'] = df['Comp_FV'] - P
 
-# Year-by-Year Compound Breakdown
-df['Comp_New_Interest_This_Year'] = df['Comp_FV'].diff().fillna(0)
+# Year-by-Year Breakdown (Marginal Interest - showing how interest changes)
+# For simple interest, it's a flat rate every year (except year 0)
+df['Simple_New_Interest'] = np.where(df['Year'] == 0, 0, P * r_simple)
+# For compound interest, it's the difference between this year's total and last year's total
+df['Comp_New_Interest'] = df['Comp_FV'].diff().fillna(0)
 df['Comp_Base_Before_This_Year'] = df['Comp_FV'].shift(1).fillna(P)
 
-# Present Value Data
+# Present Value Data & Interest Gaps
 df['Simple_PV'] = fv_target / (1 + r_simple * df['Year'])
 df['Comp_PV'] = fv_target / ((1 + r_comp) ** df['Year'])
+# The "Interest Gap" is how much free money the market provides to reach the target
 df['Simple_PV_Interest'] = fv_target - df['Simple_PV']
 df['Comp_PV_Interest'] = fv_target - df['Comp_PV']
 
 # ==========================================
 # SAMPLE DATA FOR TABLES (5 evenly spaced years)
 # ==========================================
-# This selects 5 index points (e.g., Year 0, 7, 15, 22, 30)
 sample_indices = np.linspace(0, t_max, 5, dtype=int)
 df_sample = df[df['Year'].isin(sample_indices)].copy()
 
@@ -66,7 +71,7 @@ df_sample = df[df['Year'].isin(sample_indices)].copy()
 # GRAPH 1: CUMULATIVE INTEREST (PROFIT)
 # ==========================================
 st.header("1. The Profit (Cumulative Interest)")
-st.info("**Layman Translation:** This shows *only* the extra money you made, not your starting money. Simple interest is a straight ladder—you get the exact same cash bonus every year. Compound interest is a snowball rolling down a hill—it grows a little at first, but gets massive as it picks up speed.")
+st.info("**Layman Translation:** This shows *only* the extra money you made. We have added the 'Total: Principal + Interest' column so you can see your full account balance alongside just the profit.")
 
 col1, col2 = st.columns([1, 2])
 with col1:
@@ -77,12 +82,14 @@ with col1:
     st.latex(r"I_{comp}(t) = P \cdot [(1 + r)^t - 1]")
     
     st.markdown("### 5-Year Snapshot")
-    st.markdown("See how the numbers diverge over time:")
-    # Format table for display
-    table1 = df_sample[['Year', 'Simple_Interest', 'Comp_Interest']].copy()
+    table1 = df_sample[['Year', 'Simple_Interest', 'Simple_FV', 'Comp_Interest', 'Comp_FV']].copy()
+    table1.columns = ['Year', 'Profit (Simple)', 'Total: P+I (Simple)', 'Profit (Compound)', 'Total: P+I (Compound)']
+    
     st.dataframe(table1.style.format({
-        'Simple_Interest': '${:,.2f}',
-        'Comp_Interest': '${:,.2f}'
+        'Profit (Simple)': '${:,.0f}',
+        'Total: P+I (Simple)': '${:,.0f}',
+        'Profit (Compound)': '${:,.0f}',
+        'Total: P+I (Compound)': '${:,.0f}'
     }), hide_index=True, use_container_width=True)
 
 with col2:
@@ -98,7 +105,7 @@ st.markdown("---")
 # GRAPH 2: TOTAL AMOUNT (FUTURE VALUE)
 # ==========================================
 st.header("2. Total Amount (Future Value)")
-st.info("**Layman Translation:** This shows your starting money PLUS the profit. Look at the bar chart below: see how the new orange chunk (this year's interest) gets bigger every single year? That's because it's calculated on a larger base amount, not just your initial seed. That is the magic of compounding.")
+st.info("**Layman Translation:** Here we prove the magic of compounding. Look at the 'New Interest Added' columns. Simple interest gives you the exact same amount every year. Compound interest gives you a slightly larger chunk of money every single year because you are earning interest on last year's interest.")
 
 col3, col4 = st.columns([1, 2])
 with col3:
@@ -109,10 +116,14 @@ with col3:
     st.latex(r"FV_{comp} = P(1 + r)^t")
     
     st.markdown("### 5-Year Snapshot")
-    table2 = df_sample[['Year', 'Simple_FV', 'Comp_FV']].copy()
+    table2 = df_sample[['Year', 'Simple_FV', 'Simple_New_Interest', 'Comp_FV', 'Comp_New_Interest']].copy()
+    table2.columns = ['Year', 'Total Value (Simple)', 'New Interest Added (Simple)', 'Total Value (Compound)', 'New Interest Added (Compound)']
+    
     st.dataframe(table2.style.format({
-        'Simple_FV': '${:,.2f}',
-        'Comp_FV': '${:,.2f}'
+        'Total Value (Simple)': '${:,.0f}',
+        'New Interest Added (Simple)': '${:,.0f}',
+        'Total Value (Compound)': '${:,.0f}',
+        'New Interest Added (Compound)': '${:,.0f}'
     }), hide_index=True, use_container_width=True)
 
 with col4:
@@ -121,7 +132,7 @@ with col4:
     fig2.add_trace(go.Bar(x=df['Year'], y=[P]*len(df), name='Initial Principal', marker_color='#2ca02c'))
     past_interest = df['Comp_Base_Before_This_Year'] - P
     fig2.add_trace(go.Bar(x=df['Year'], y=past_interest, name='Past Compounded Interest', marker_color='#ffbb78'))
-    fig2.add_trace(go.Bar(x=df['Year'], y=df['Comp_New_Interest_This_Year'], name='New Interest Added This Year', marker_color='#d62728'))
+    fig2.add_trace(go.Bar(x=df['Year'], y=df['Comp_New_Interest'], name='New Interest Added This Year', marker_color='#d62728'))
 
     fig2.update_layout(barmode='stack', title="Proving Compound Growth Year-by-Year", xaxis_title="Years", yaxis_title="Total Account Value ($)", hovermode="x unified")
     st.plotly_chart(fig2, use_container_width=True)
@@ -132,7 +143,7 @@ st.markdown("---")
 # GRAPH 3 & 4: PRESENT VALUE
 # ==========================================
 st.header("3. Present Value (Time-Traveling Your Money)")
-st.info(f"**Layman Translation:** Imagine you need exactly **${fv_target:,.0f}** in the future. *Present Value* asks: 'How much cash do I need to lock away TODAY to reach that goal?' The longer you have to wait, the less money you need to put in today because time does the heavy lifting for you.")
+st.info(f"**Layman Translation:** To reach **${fv_target:,.0f}**, your money is split into two parts: the cash you put in today (Present Value), and the free money the market gives you (Interest Gap). Notice how as the Present Value shrinks over time, the Interest Gap grows to make up the difference!")
 
 col5, col6 = st.columns([1, 2])
 with col5:
@@ -143,24 +154,27 @@ with col5:
     st.latex(r"PV_{comp} = \frac{FV}{(1 + r)^t}")
     
     st.markdown("### 5-Year Snapshot")
-    st.markdown(f"*Cash needed today to reach ${fv_target:,.0f}*")
-    table3 = df_sample[['Year', 'Simple_PV', 'Comp_PV']].copy()
+    table3 = df_sample[['Year', 'Simple_PV', 'Simple_PV_Interest', 'Comp_PV', 'Comp_PV_Interest']].copy()
+    table3.columns = ['Year', 'Present Value (Simple)', 'Interest Gap (Simple)', 'Present Value (Compound)', 'Interest Gap (Compound)']
+    
     st.dataframe(table3.style.format({
-        'Simple_PV': '${:,.2f}',
-        'Comp_PV': '${:,.2f}'
+        'Present Value (Simple)': '${:,.0f}',
+        'Interest Gap (Simple)': '${:,.0f}',
+        'Present Value (Compound)': '${:,.0f}',
+        'Interest Gap (Compound)': '${:,.0f}'
     }), hide_index=True, use_container_width=True)
 
 with col6:
     fig3 = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1, 
-                         subplot_titles=("How much you need TODAY (Present Value)", "How much the market pays for you (Interest)"))
+                         subplot_titles=("How much cash you need TODAY (Present Value)", "How much free money the market pays (Interest Gap)"))
     
     # Graph 3: PV Curve
     fig3.add_trace(go.Scatter(x=df['Year'], y=df['Simple_PV'], mode='lines', name='PV (Simple)', line=dict(color='#1f77b4')), row=1, col=1)
     fig3.add_trace(go.Scatter(x=df['Year'], y=df['Comp_PV'], mode='lines', name='PV (Compound)', line=dict(color='#ff7f0e')), row=1, col=1)
     
     # Graph 4: Interest component in PV
-    fig3.add_trace(go.Scatter(x=df['Year'], y=df['Simple_PV_Interest'], mode='lines', name='Interest Earned (Simple)', line=dict(color='#1f77b4', dash='dot')), row=2, col=1)
-    fig3.add_trace(go.Scatter(x=df['Year'], y=df['Comp_PV_Interest'], mode='lines', name='Interest Earned (Compound)', line=dict(color='#ff7f0e', dash='dot')), row=2, col=1)
+    fig3.add_trace(go.Scatter(x=df['Year'], y=df['Simple_PV_Interest'], mode='lines', name='Interest Gap (Simple)', line=dict(color='#1f77b4', dash='dot')), row=2, col=1)
+    fig3.add_trace(go.Scatter(x=df['Year'], y=df['Comp_PV_Interest'], mode='lines', name='Interest Gap (Compound)', line=dict(color='#ff7f0e', dash='dot')), row=2, col=1)
 
     fig3.update_layout(height=600, title=f"Working Backwards from a Target of ${fv_target:,.0f}", hovermode="x unified")
     fig3.update_yaxes(title_text="Required Starting Cash ($)", row=1, col=1)
