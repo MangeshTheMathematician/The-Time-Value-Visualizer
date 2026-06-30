@@ -62,16 +62,13 @@ Future value calculates how much a present cash flow will grow over $t$ years.
 
 Simple Interest: Interest is calculated exclusively on the original principal ($P$).
 
-
 $$FV_{simple} = P(1 + rt)$$
 
 Compound Interest: Interest earns interest. For compounding $m$ times per year:
 
-
 $$FV_{compound} = P\left(1+\frac{r}{m}\right)^{mt}$$
 
 Continuous Compounding: The theoretical limit used in quantitative pricing models:
-
 
 $$FV_{continuous} = Pe^{rt}$$
 
@@ -81,11 +78,9 @@ Present value discounts a future target amount back to today's dollars.
 
 Compound Present Value:
 
-
 $$PV = \frac{FV}{\left(1+\frac{r}{m}\right)^{mt}}$$
 
 Continuous Present Value:
-
 
 $$PV = FVe^{-rt}$$
 
@@ -95,27 +90,27 @@ The dashboard proves mathematically that a lower compound rate can outperform a 
 
 Assuming the following inputs:
 
-$P = \$100,000$
+$P = 100,000$
 
 $r_{simple} = 5.0\%$
 
 $r_{compound} = 4.5\%$ (Annual compounding)
 
-$t = 30$ years
+$t = 30 \text{ years}$
 
 Future Value Comparison:
 
-Simple Growth: $\$100,000(1 + 0.05 \times 30) = \$250,000$
+Simple Growth: $100,000(1 + 0.05 \times 30) = 250,000$
 
-Compound Growth: $\$100,000(1.045)^{30} \approx \$374,532$
+Compound Growth: $100,000(1.045)^{30} \approx 374,532$
 
 Even though the compound rate (4.5%) is lower than the simple rate (5%), compounding generates an excess wealth of $124,532 over 30 years due to the geometric scaling of interest earning interest.
 
 Present Value Target (Goal: $500,000 in 30 years):
 
-Capital needed today (Simple): $\frac{\$500,000}{1 + (0.05 \times 30)} = \$200,000$
+Capital needed today (Simple): $\frac{500,000}{1 + (0.05 \times 30)} = 200,000$
 
-Capital needed today (Compound): $\frac{\$500,000}{1.045^{30}} \approx \$133,500$
+Capital needed today (Compound): $\frac{500,000}{1.045^{30}} \approx 133,500$
 
 Compound discounting saves the investor $66,500 in upfront capital requirements.
 
