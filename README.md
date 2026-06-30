@@ -22,4 +22,5 @@ To run this dashboard on your local machine, follow these steps:
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/MangeshTheMathematician/The-Time-Value-Visualizer.git](https://github.com/MangeshTheMathematician/The-Time-Value-Visualizer.git)
+   `git clone https://github.com/MangeshTheMathematician/The-Time-Value-Visualizer.git`
+   
