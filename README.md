@@ -1,471 +1,128 @@
-# Quant Time Value of Money Dashboard
-
-## 1. Project Summary
-
-This project is an interactive Streamlit dashboard that explains the Time Value of Money using simple interest, compound interest, present value, discounting, and rate sensitivity.
-
-The dashboard allows a user to enter a starting principal, interest rates, time horizon, compounding frequency, and a future target amount. It then calculates how money grows forward through time and how future money is discounted back to today.
-
-This project is designed as a foundational quantitative finance dashboard because Time Value of Money is the base concept behind bonds, forwards, swaps, options, yield curves, DCF valuation, and portfolio growth.
-
----
-
-## 2. Why I Built This
-
-I built this project to convert a basic financial mathematics concept into an interactive quant dashboard.
-
-The goal is to show that I can:
-
-- explain financial mathematics clearly,
-- convert formulas into Python code,
-- build an interactive Streamlit dashboard,
-- visualize financial behavior over time,
-- calculate present value and future value,
-- measure sensitivity to interest rate changes,
-- communicate results in a business-friendly way.
-
----
-
-## 3. Core Quant Concept
-
-The main concept is:
-
-> Money today and money in the future are not equal.
-
-Money changes value through time because it can earn interest.
-
-This idea is called:
-
-\[
-\text{Time Value of Money}
-\]
-
-It is used in:
-
-- bond pricing,
-- forward pricing,
-- swap valuation,
-- option pricing,
-- pension valuation,
-- actuarial reserves,
-- discounted cash flow valuation,
-- portfolio return analysis.
-
----
-
-## 4. Required Basic Concepts
-
-### Principal
-
-Principal means starting money.
-
-\[
-P = \text{starting money}
-\]
-
-Example:
-
-\[
-P = 100,000
-\]
-
-### Interest Rate
-
-Interest rate means the growth rate of money.
-
-If interest rate is 5%, then:
-
-\[
-r = \frac{5}{100} = 0.05
-\]
-
-### Time
-
-Time means number of years.
-
-\[
-t = \text{number of years}
-\]
-
-### Future Value
-
-Future Value means how much money becomes in the future.
-
-\[
-FV = \text{future money}
-\]
-
-### Present Value
-
-Present Value means how much money is needed today to reach a future amount.
-
-\[
-PV = \text{today's value of future money}
-\]
-
-### Compounding Frequency
-
-Compounding frequency means how many times interest is added per year.
-
-\[
-m = \text{number of compounding periods per year}
-\]
-
-Examples:
-
-- Annual: \(m=1\)
-- Semi-Annual: \(m=2\)
-- Quarterly: \(m=4\)
-- Monthly: \(m=12\)
-- Daily: \(m=252\)
-
----
-
-## 5. Formula Explanation and Proof
-
-## 5.1 Simple Interest
-
-Simple interest means interest is calculated only on the original principal.
-
-Interest each year is:
-
-\[
-P \times r
-\]
-
-For \(t\) years:
-
-\[
-\text{Total Interest} = P \times r \times t
-\]
-
-Future Value equals principal plus interest:
-
-\[
-FV = P + Prt
-\]
-
-Take \(P\) common:
-
-\[
-FV_{simple} = P(1+rt)
-\]
-
-### Simple Interest Formula
-
-\[
-FV_{simple} = P(1+rt)
-\]
-
-where:
-
-- \(P\) = starting money,
-- \(r\) = simple annual interest rate,
-- \(t\) = number of years.
-
----
-
-## 5.2 Compound Interest
-
-Compound interest means interest earns more interest.
-
-After one year:
-
-\[
-FV_1 = P(1+r)
-\]
-
-After two years:
-
-\[
-FV_2 = P(1+r)(1+r)
-\]
-
-\[
-FV_2 = P(1+r)^2
-\]
-
-After three years:
-
-\[
-FV_3 = P(1+r)^3
-\]
-
-So after \(t\) years:
-
-\[
-FV_{compound} = P(1+r)^t
-\]
-
-If interest compounds \(m\) times per year:
-
-\[
-FV_{compound} = P\left(1+\frac{r}{m}\right)^{mt}
-\]
-
-where:
-
-- \(P\) = principal,
-- \(r\) = annual compound rate,
-- \(m\) = compounding periods per year,
-- \(t\) = number of years.
-
----
-
-## 5.3 Continuous Compounding
-
-In quant finance, continuous compounding is often used because it is mathematically clean.
-
-The formula is:
-
-\[
-FV_{continuous} = Pe^{rt}
-\]
-
-where:
-
-- \(e\) is Euler's number,
-- \(r\) is the continuously compounded rate,
-- \(t\) is time in years.
-
----
-
-## 5.4 Present Value
-
-Present value is future value backwards.
-
-Start from compound future value:
-
-\[
-FV = PV(1+r)^t
-\]
-
-Divide both sides by:
-
-\[
-(1+r)^t
-\]
-
-Then:
-
-\[
-PV = \frac{FV}{(1+r)^t}
-\]
-
-With compounding frequency:
-
-\[
-PV = \frac{FV}{\left(1+\frac{r}{m}\right)^{mt}}
-\]
-
-With continuous compounding:
-
-\[
-PV = FVe^{-rt}
-\]
-
----
-
-## 6. Detailed Example
-
-Dashboard inputs:
-
-\[
-P = 100,000
-\]
-
-\[
-r_{simple} = 5\% = 0.05
-\]
-
-\[
-r_{compound} = 4.5\% = 0.045
-\]
-
-\[
-t = 30
-\]
-
-\[
-FV_{target} = 500,000
-\]
-
----
-
-## 6.1 Simple Future Value
-
-\[
-FV_{simple} = P(1+rt)
-\]
-
-\[
-FV_{simple} = 100,000(1 + 0.05 \times 30)
-\]
-
-\[
-FV_{simple} = 100,000(1 + 1.5)
-\]
-
-\[
-FV_{simple} = 100,000 \times 2.5
-\]
-
-\[
-FV_{simple} = 250,000
-\]
-
-Simple interest earned:
-
-\[
-250,000 - 100,000 = 150,000
-\]
-
----
-
-## 6.2 Compound Future Value
-
-\[
-FV_{compound} = P(1+r)^t
-\]
-
-\[
-FV_{compound} = 100,000(1.045)^{30}
-\]
-
-\[
-FV_{compound} \approx 374,532
-\]
-
-Compound interest earned:
-
-\[
-374,532 - 100,000 = 274,532
-\]
-
-Compound advantage over simple interest:
-
-\[
-374,532 - 250,000 = 124,532
-\]
-
-So compound interest creates approximately:
-
-\[
-124,532
-\]
-
-more wealth than simple interest over 30 years.
-
----
-
-## 6.3 Present Value Target
-
-Target future amount:
-
-\[
-FV = 500,000
-\]
-
-Simple present value:
-
-\[
-PV_{simple} = \frac{500,000}{1 + 0.05 \times 30}
-\]
-
-\[
-PV_{simple} = \frac{500,000}{2.5}
-\]
-
-\[
-PV_{simple} = 200,000
-\]
-
-Compound present value:
-
-\[
-PV_{compound} = \frac{500,000}{1.045^{30}}
-\]
-
-\[
-PV_{compound} \approx 133,500
-\]
-
-Cash saved by compound discounting:
-
-\[
-200,000 - 133,500 = 66,500
-\]
-
-This means that to reach 500,000 after 30 years, compound growth requires much less money today.
-
----
-
-## 7. Dashboard Features
-
-The dashboard includes:
-
-- principal input,
-- simple interest rate input,
-- compound interest rate input,
-- compounding frequency selector,
-- time horizon slider,
-- future value target input,
-- simple future value calculation,
-- compound future value calculation,
-- present value calculation,
-- compound advantage metric,
-- break-even year calculation,
-- rate sensitivity heatmap,
-- CSV download.
-
----
-
-## 8. Dashboard Structure
-
-The app follows this structure:
+Quant Time Value of Money (TVM) Dashboard
 
 1. Executive Summary
-2. Inputs / Controls
-3. Key Formulas
-4. Main Visualization
-5. Risk / Sensitivity Metrics
-6. Interpretation
-7. Limitations
-8. Download CSV
 
----
+This project is an interactive quantitative finance dashboard built with Streamlit that models the Time Value of Money (TVM). It simulates simple interest, compound interest, continuous compounding, present value discounting, and rate sensitivity over customizable time horizons.
 
-## 9. Visualizations
+Money today and money in the future are not equal. This dashboard serves as a foundational financial engineering tool to visualize how capital scales through time and how future cash flows are discounted back to present value—the core mechanical concept behind bond pricing, swap valuation, option pricing, and discounted cash flow (DCF) models.
 
-The dashboard contains four main visualization tabs:
+2. Technical Stack
 
-### Future Value Growth
+Frontend / App Framework: Streamlit
 
-Compares simple future value against compound future value over time.
+Numerical Computing: NumPy
 
-### Interest Engine
+Data Manipulation: Pandas
 
-Shows how compound growth is built from:
+Data Visualization: Plotly Graph Objects & Subplots
 
-- original principal,
-- past compounded interest,
-- new interest added this year.
+3. How to Run Locally
 
-### Present Value
+To run this dashboard on your local machine, follow these steps:
 
-Shows how much money is needed today to reach a future target.
+Clone the repository:
 
-### Rate Sensitivity
+git clone [https://github.com/MangeshTheMathematician/The-Time-Value-Visualizer.git](https://github.com/MangeshTheMathematician/The-Time-Value-Visualizer.git)
 
-Shows how future value changes when interest rates and time horizon change.
 
----
+Navigate to the folder:
 
-## 10. Screenshots
+cd The-Time-Value-Visualizer
 
-Add screenshots here after deploying the Streamlit app.
 
-Example:
+Install the required dependencies:
 
-```markdown
-![Dashboard Screenshot](assets/tvm_dashboard.png)
+pip install -r requirements.txt
+
+
+Run the Streamlit app:
+
+streamlit run tmvapp.py
+
+
+(Note: You can view the live deployment of this dashboard here: https://hessian-ai-timevaluemoney.streamlit.app/)
+
+4. Dashboard Features
+
+Interactive Controls: Dynamic sliders and inputs for Principal, Simple/Compound Rates, Time Horizon, Target Future Value, and Compounding Frequencies (Annual to Continuous).
+
+Growth Engine Visualization: Stacked bar charts separating original principal, past compounded interest, and new interest generated per period.
+
+Present Value Analysis: Visual comparisons of the upfront capital required today to reach a target future value using simple vs. compound discounting.
+
+Rate Sensitivity Heatmap: A 2D matrix visualizing how future value fluctuates across an array of interest rate shocks and time horizons.
+
+5. Mathematical Engine & Proofs
+
+At the core of this dashboard are standard quantitative finance formulas, executed via vectorized NumPy arrays for rapid simulation.
+
+Future Value (FV)
+
+Future value calculates how much a present cash flow will grow over $t$ years.
+
+Simple Interest: Interest is calculated exclusively on the original principal ($P$).
+
+
+$$FV_{simple} = P(1 + rt)$$
+
+Compound Interest: Interest earns interest. For compounding $m$ times per year:
+
+
+$$FV_{compound} = P\left(1+\frac{r}{m}\right)^{mt}$$
+
+Continuous Compounding: The theoretical limit used in quantitative pricing models:
+
+
+$$FV_{continuous} = Pe^{rt}$$
+
+Present Value (PV)
+
+Present value discounts a future target amount back to today's dollars.
+
+Compound Present Value:
+
+
+$$PV = \frac{FV}{\left(1+\frac{r}{m}\right)^{mt}}$$
+
+Continuous Present Value:
+
+
+$$PV = FVe^{-rt}$$
+
+6. Case Study: The Power of Compounding
+
+The dashboard proves mathematically that a lower compound rate can outperform a higher simple rate over long horizons.
+
+Assuming the following inputs:
+
+$P = \$100,000$
+
+$r_{simple} = 5.0\%$
+
+$r_{compound} = 4.5\%$ (Annual compounding)
+
+$t = 30$ years
+
+Future Value Comparison:
+
+Simple Growth: $\$100,000(1 + 0.05 \times 30) = \$250,000$
+
+Compound Growth: $\$100,000(1.045)^{30} \approx \$374,532$
+
+Even though the compound rate (4.5%) is lower than the simple rate (5%), compounding generates an excess wealth of $124,532 over 30 years due to the geometric scaling of interest earning interest.
+
+Present Value Target (Goal: $500,000 in 30 years):
+
+Capital needed today (Simple): $\frac{\$500,000}{1 + (0.05 \times 30)} = \$200,000$
+
+Capital needed today (Compound): $\frac{\$500,000}{1.045^{30}} \approx \$133,500$
+
+Compound discounting saves the investor $66,500 in upfront capital requirements.
+
+7. Limitations & Assumptions
+
+Deterministic Environment: This model assumes constant interest rates across the entire time horizon. It does not model stochastic rate volatility.
+
+Frictionless Market: The calculations do not account for inflation, capital gains tax, liquidity constraints, or default risk.
+
+Educational Scope: Simple interest is modeled for educational benchmarking, though institutional finance relies almost exclusively on periodic or continuous compounding.
